@@ -90,4 +90,4 @@ def lambda_handler(event, context):
   else:
       print("RequestType %s, nothing to do" % event["RequestType"])
 
-  send(event, context, SUCCESS, "SUCCESS");
+  send(event, context, SUCCESS, { "Outcome": "SUCCESS" });
