@@ -56,10 +56,10 @@ if [ ! -f ${deployment_dir}/dist/ai-driven-social-media-dashboard.template ]; th
 fi
 
 echo "Updating code source bucket in template with ${1}"
-replace="s/%%BUCKET_NAME%%/${1}/g"
+replace="s/__BUCKET_NAME__/${1}/g"
 templatePath="${deployment_dir}/dist/ai-driven-social-media-dashboard.template"
 echo "sed ${sedFlags} '${replace}' \"${templatePath}\""
-sed ${sedFlags} '$replace' "${templatePath}"
+sed ${sedFlags} "${replace}" "${templatePath}"
 success=$?
 if [ $success -ne 0 ]; then
     echo "sed failed to update bucket name with exit code : $success"
@@ -67,9 +67,9 @@ if [ $success -ne 0 ]; then
 fi
 
 echo "Updating code source version in template with ${1}"
-replace="s/%%VERSION%%/${2}/g"
+replace="s/__VERSION__/${2}/g"
 echo "sed ${sedFlags} ${replace} \"${templatePath}\""
-sed ${sedFlags} '$replace' "${templatePath}"
+sed ${sedFlags} "${replace}" "${templatePath}"
 if [ $? -ne 0 ]; then
     echo "sed failed to update version number with exit code : $?"
     exit 2
@@ -98,7 +98,7 @@ echo "tarring ec2 twitter reader code"
 cd ${deployment_dir}/../source/ec2_twitter_reader/
 
 echo "npm ci"
-npm ci
+npm ci 2>/dev/null 1>/dev/null
 success=$?
 if [ $success -ne 0 ]; then
     echo "npm install failed with exit code : $success"
@@ -106,7 +106,7 @@ if [ $success -ne 0 ]; then
 fi
 
 echo "npm run build"
-npm run build
+npm run build 2>/dev/null 1>/dev/null
 success=$?
 if [ $success -ne 0 ]; then
     echo "npm run build failed with exit code : $success"
