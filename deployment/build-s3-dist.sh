@@ -42,7 +42,7 @@ if [ -d ${deployment_dir}/dist ]; then
     rm -rf ${deployment_dir}/dist
 fi
 mkdir -p ${deployment_dir}/dist
-if [ !-d ${deployment_dir}/dist ]; then
+if [ ! -d ${deployment_dir}/dist ]; then
     echo "Couldn't create directiory : ${deployment_dir}"
     exit 1
 fi
@@ -79,7 +79,7 @@ fi
 echo "Packaging socialmediafunction lambda"
 cd ${deployment_dir}/../source/socialmediafunction/
 zip -q -r9 ${deployment_dir}/dist/socialmediafunction.zip *
-if [ !-f ${deployment_dir}/dist/socialmediafunction.zip ]; then
+if [ ! -f ${deployment_dir}/dist/socialmediafunction.zip ]; then
     echo "Couldn't build zip file : ${deployment_dir}/dist/socialmediafunction.zip"
     exit 3
 fi
@@ -88,7 +88,7 @@ fi
 echo "Packaging addtriggerfunction lambda"
 cd ${deployment_dir}/../source/addtriggerfunction/
 zip -q -r9 ${deployment_dir}/dist/addtriggerfunction.zip *
-if [ !-f ${deployment_dir}/dist/addtriggerfunction.zip ]; then
+if [ ! -f ${deployment_dir}/dist/addtriggerfunction.zip ]; then
     echo "Couldn't build zip file : ${deployment_dir}/dist/addtriggerfunction.zip"
     exit 3
 fi
@@ -114,7 +114,7 @@ if [ $success -ne 0 ]; then
 fi
 
 echo "npm run tar"
-npm run tar
+npm run tar > /dev/null
 success=$?
 if [ $success -ne 0 ]; then
     echo "npm run tar failed with exit code : $success"
@@ -123,6 +123,8 @@ fi
 
 # Copy packaged Lambda function to $deployment_dir/dist
 cp ./dist/ec2_twitter_reader.tar ${deployment_dir}/dist/ec2_twitter_reader.tar
+
+echo "cleaning up"
 # Remove temporary build files
 rm -rf dist
 rm -rf node_modules
