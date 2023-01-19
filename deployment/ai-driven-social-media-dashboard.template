@@ -248,7 +248,7 @@ Resources:
       - DeviceName: "/dev/xvda"
         Ebs: 
           Encrypted: True
-          VolumeType: gp2
+          VolumeType: gp3
           DeleteOnTermination: True
           VolumeSize: 8
       Tags:
@@ -454,7 +454,7 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       Handler: index.lambda_handler
-      Runtime: python3.6
+      Runtime: python3.9
       MemorySize: 256
       Timeout: 300
       Role:
@@ -613,7 +613,7 @@ Resources:
     Properties:
       Handler: index.lambda_handler
       Role: !GetAtt AttachPolicyCustomResourceLambdaRole.Arn
-      Runtime: python3.6
+      Runtime: python3.9
       Timeout: 300
       Environment :
         Variables:
