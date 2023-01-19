@@ -271,7 +271,7 @@ Resources:
           - |     # No more Fn::Join needed
             #!/bin/bash -ex
             sleep 60
-            export HOME=/root
+            export HOME"=/root"
             cd $HOME
             curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.32.1/install.sh | bash
             export NVM_DIR="$HOME/.nvm"
