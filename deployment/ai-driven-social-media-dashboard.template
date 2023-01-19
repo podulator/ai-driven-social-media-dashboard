@@ -158,6 +158,13 @@ Resources:
                   - !Ref AuthAccessTokenSecretManagerSecret
                   - !Ref AuthConsumerManagerSecret
                   - !Ref AuthAccessTokenManagerSecret
+              -
+                Effect: Allow
+                Action:
+                  - 's3:Get*'
+                  - 's3:List*'
+                Resource:
+                  - '*'
   VPC:
     Type: AWS::EC2::VPC
     Properties:
@@ -263,6 +270,7 @@ Resources:
             #!/bin/bash -ex
             sleep 60
 
+            cd $HOME
             curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.32.1/install.sh | bash
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
@@ -287,16 +295,15 @@ Resources:
             kinesis_delivery: '${KinesisIngestionFirehose}'
             }" > /home/ec2-user/twitter_reader_config.js
 
-            wget ${EC2TwitterCode}
-
-            tar --warning=no-unknown-keyword -xf ec2_twitter_reader.tar -C /home/ec2-user/
+            aws s3 cp ${EC2TwitterCode} ./ec2_twitter_reader.tar
+            tar --warning=no-unknown-keyword -xf ./ec2_twitter_reader.tar -C /home/ec2-user/
 
             cd /home/ec2-user
             nohup node twitter_stream_producer_app.js &
 
             echo "Service started."
           - {
-              EC2TwitterCode: !Join ['', ['https://s3.', !Ref 'AWS::Region', '.amazonaws.com/', !Join ['-', [!FindInMap [ Code, EC2Twitter, S3Bucket], !Ref 'AWS::Region']], '/', !FindInMap [ Code, EC2Twitter, S3Key]]],
+              EC2TwitterCode: !Join ['', ['s3://', !Join ['-', [!FindInMap [ Code, EC2Twitter, S3Bucket], !Ref 'AWS::Region']], '/', !FindInMap [ Code, EC2Twitter, S3Key]]],
               Region: !Ref 'AWS::Region',
               TwitterTerms: !Ref TwitterTermList,
               TwitterLanguages: !Ref TwitterLanguages ,
