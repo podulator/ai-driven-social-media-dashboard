@@ -23,6 +23,13 @@ if [ -z "$2" ]; then
     exit 1
 fi
 
+# work out what platform we are on, and set sed up accordingly
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  sedFlags="-i '' -e "
+else
+  sedFlags="-i -e "
+fi
+
 # Build source
 echo "Staring to build distribution"
 # Create variable for deployment directory to use as a reference for builds
@@ -30,42 +37,95 @@ echo "export deployment_dir=`pwd`"
 export deployment_dir=`pwd`
 
 # Make deployment/dist folder for containing the built solution
-echo "mkdir -p $deployment_dir/dist"
-mkdir -p $deployment_dir/dist
+echo "mkdir -p ${deployment_dir}/dist"
+if [ -d ${deployment_dir}/dist ]; then
+    rm -rf ${deployment_dir}/dist
+fi
+mkdir -p ${deployment_dir}/dist
+if [ !-d ${deployment_dir}/dist ]; then
+    echo "Couldn't create directiory : ${deployment_dir}"
+    exit 1
+fi
 
 # Copy project CFN template(s) to "dist" folder and replace bucket name with arg $1
-echo "cp -f ai-driven-social-media-dashboard.template $deployment_dir/dist/ai-driven-social-media-dashboard.template"
-cp -f ai-driven-social-media-dashboard.template $deployment_dir/dist/ai-driven-social-media-dashboard.template
-echo "Updating code source bucket in template with $1"
-replace="s/%%BUCKET_NAME%%/$1/g"
-echo "sed -i '' -e $replace $deployment_dir/dist/ai-driven-social-media-dashboard.template"
-sed -i '' -e $replace $deployment_dir/dist/ai-driven-social-media-dashboard.template
-echo "Updating code source version in template with $1"
-replace="s/%%VERSION%%/$2/g"
-echo "sed -i '' -e $replace $deployment_dir/dist/ai-driven-social-media-dashboard.template"
-sed -i '' -e $replace $deployment_dir/dist/ai-driven-social-media-dashboard.template
+echo "cp -f ai-driven-social-media-dashboard.template ${deployment_dir}/dist/ai-driven-social-media-dashboard.template"
+cp -f ai-driven-social-media-dashboard.template ${deployment_dir}/dist/ai-driven-social-media-dashboard.template
+if [ ! -f ${deployment_dir}/dist/ai-driven-social-media-dashboard.template ]; then
+    echo "Couldn't copy file to dist folder"
+    exit 1
+fi
+
+echo "Updating code source bucket in template with ${1}"
+replace="s/%%BUCKET_NAME%%/${1}/g"
+templatePath="${deployment_dir}/dist/ai-driven-social-media-dashboard.template"
+echo "sed ${sedFlags} '${replace}' \"${templatePath}\""
+sed ${sedFlags} '$replace' "${templatePath}"
+success=$?
+if [ $success -ne 0 ]; then
+    echo "sed failed to update bucket name with exit code : $success"
+    exit 1
+fi
+
+echo "Updating code source version in template with ${1}"
+replace="s/%%VERSION%%/${2}/g"
+echo "sed ${sedFlags} ${replace} \"${templatePath}\""
+sed ${sedFlags} '$replace' "${templatePath}"
+if [ $? -ne 0 ]; then
+    echo "sed failed to update version number with exit code : $?"
+    exit 2
+fi
 
 # Package socialmediafunction Lambda function
 echo "Packaging socialmediafunction lambda"
-cd $deployment_dir/../source/socialmediafunction/
-zip -q -r9 $deployment_dir/dist/socialmediafunction.zip *
+cd ${deployment_dir}/../source/socialmediafunction/
+zip -q -r9 ${deployment_dir}/dist/socialmediafunction.zip *
+if [ !-f ${deployment_dir}/dist/socialmediafunction.zip ]; then
+    echo "Couldn't build zip file : ${deployment_dir}/dist/socialmediafunction.zip"
+    exit 3
+fi
 
 # Package addtriggerfunction Lambda function
 echo "Packaging addtriggerfunction lambda"
-cd $deployment_dir/../source/addtriggerfunction/
-zip -q -r9 $deployment_dir/dist/addtriggerfunction.zip *
+cd ${deployment_dir}/../source/addtriggerfunction/
+zip -q -r9 ${deployment_dir}/dist/addtriggerfunction.zip *
+if [ !-f ${deployment_dir}/dist/addtriggerfunction.zip ]; then
+    echo "Couldn't build zip file : ${deployment_dir}/dist/addtriggerfunction.zip"
+    exit 3
+fi
 
 #zipping code for ec2
 echo "tarring ec2 twitter reader code"
-cd $deployment_dir/../source/ec2_twitter_reader/
-npm install
+cd ${deployment_dir}/../source/ec2_twitter_reader/
+
+echo "npm ci"
+npm ci
+success=$?
+if [ $success -ne 0 ]; then
+    echo "npm install failed with exit code : $success"
+    exit 4
+fi
+
+echo "npm run build"
 npm run build
+success=$?
+if [ $success -ne 0 ]; then
+    echo "npm run build failed with exit code : $success"
+    exit 4
+fi
+
+echo "npm run tar"
 npm run tar
+success=$?
+if [ $success -ne 0 ]; then
+    echo "npm run tar failed with exit code : $success"
+    exit 4
+fi
+
 # Copy packaged Lambda function to $deployment_dir/dist
-cp ./dist/ec2_twitter_reader.tar $deployment_dir/dist/ec2_twitter_reader.tar
+cp ./dist/ec2_twitter_reader.tar ${deployment_dir}/dist/ec2_twitter_reader.tar
 # Remove temporary build files
 rm -rf dist
 rm -rf node_modules
 
 # Done, so go back to deployment_dir
-cd $deployment_dir
+cd ${deployment_dir}
