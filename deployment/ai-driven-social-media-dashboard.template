@@ -265,10 +265,10 @@ Resources:
 
             curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.32.1/install.sh | bash
             export NVM_DIR="$HOME/.nvm"
+            echo ${NVM_DIR}
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             nvm install 16
-            npm install --registry=https://registry.npmjs.org/
-            npm install --registry=https://custom.npm.registry.com/
+            rm -rf /.nvm
             npm install node-sass
 
             yum remove -y aws-cli
@@ -276,7 +276,7 @@ Resources:
             unzip awscliv2.zip
             ./aws/install
             ln -s /usr/local/bin/aws /usr/bin/aws
-            
+
             echo "var twitter_config = module.exports = {
             twitter: {
                 consumer_key: '`aws secretsmanager get-secret-value --secret-id AuthConsumerManagerSecret --query SecretString --output text --region ${Region}`',
