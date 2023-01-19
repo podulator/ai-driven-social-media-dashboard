@@ -238,7 +238,7 @@ Resources:
     Type: AWS::EC2::Instance
     Properties:
       ImageId : !Ref LatestAmiId
-      InstanceType: t2.medium
+      InstanceType: t3.medium
       KeyName: !Ref InstanceKeyName
       SecurityGroupIds:
       - !Ref TweetsEC2SecurityGroup
